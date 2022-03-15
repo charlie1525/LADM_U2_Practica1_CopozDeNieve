@@ -11,7 +11,8 @@
         android:theme="@style/Theme.LADM_U2_Practica1_CopozDeNieve">
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
