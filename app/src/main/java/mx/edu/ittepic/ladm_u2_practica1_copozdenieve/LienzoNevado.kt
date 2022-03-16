@@ -1,6 +1,7 @@
 package mx.edu.ittepic.ladm_u2_practica1_copozdenieve
 
 import android.graphics.*
+import android.provider.Settings
 import android.view.MotionEvent
 import android.view.View
 import kotlinx.coroutines.*
@@ -13,14 +14,16 @@ class LienzoNevado(ActMain: MainActivity) : View(ActMain) {
     // declaracion de variables
     val actPrincipal = ActMain
     val fondoApp = BitmapFactory.decodeResource(actPrincipal.resources, R.drawable.fondoapp)
+    var contador = 0f
     var efecto = ArrayList<ElEfecto>()
     var nevada = ArrayList<ElEfecto>()
-    val laNevada = NevadaEfecto(this)
+
     val scope = CoroutineScope(Job() + Dispatchers.Main)
     val objNevada = scope.launch(
         EmptyCoroutineContext,
         CoroutineStart.LAZY
     ) { actPrincipal.runOnUiThread { laNevada.start() } }
+
 
     //inicio del metodo onDraw
     override fun onDraw(c: Canvas) {
@@ -143,53 +146,96 @@ class LienzoNevado(ActMain: MainActivity) : View(ActMain) {
         c.drawPath(triangulo, p)
     }
 
+    // seccion de metodos fuera de la clase
+    fun contadorTiempoNevada() = GlobalScope.launch {
+        var thisContador = 0f
+        while (laNevada.isAlive) {
+            thisContador++
+        }
+        delay((Math.random() * 550).toLong())
+        contador = thisContador
+    }
+
+    val laNevada = NevadaEfecto(this, contador)
 } // fin de la clase Lienzo
 
-class NevadaEfecto(este: LienzoNevado) : Thread() {
+class NevadaEfecto(este: LienzoNevado, banderaNevado: Float) : Thread() {
     private val aquel = este
-    private var nevadaIntenso = 0f
+    private var nevadaIntenso = banderaNevado
+    var ejecutar = true
+    var pausado = false
     override fun run() {
         super.run()
-        while (true) {
-            nevadaIntenso = Random.nextFloat()
-            if (nevadaIntenso<= 300) {
-                aquel.nevada.forEach {
-                    it.LaNevadaEfecto()
-                }
-                if (true) {
-                    (1..20).forEach { _ ->
-                        val copo = ElEfecto()
-                        aquel.efecto.add(copo)
-                    }
-                }
-                aquel.nevada.addAll(aquel.efecto)
-                aquel.efecto.clear()
-                aquel.nevada.removeIf { a -> !a.estado }
-                aquel.actPrincipal.runOnUiThread() {
-                    aquel.invalidate()
-                }
-                sleep(80)
-                nevadaIntenso = 0f
+        while (ejecutar) {
+            if (!pausado) {
+                when (nevadaIntenso.toInt()) {
+                    in 1..300 -> {
+                        aquel.nevada.forEach {
+                            it.LaNevadaEfecto()
+                        }
+                        if (true) {
+                            (1..20).forEach { _ ->
+                                val copo = ElEfecto()
+                                aquel.efecto.add(copo)
+                            }
+                        }
+                        aquel.nevada.addAll(aquel.efecto)
+                        aquel.efecto.clear()
+                        aquel.nevada.removeIf { a -> !a.estado }
+                        aquel.actPrincipal.runOnUiThread() {
+                            aquel.invalidate()
+                        }
+                        sleep(80)
+                        nevadaIntenso = 0f
+                    } // fin del primer caso
 
-            } else if (nevadaIntenso >300){
-                aquel.nevada.forEach {
-                    it.LaNevadaEfecto()
-                }
-                if (true) {
-                    (1..180).forEach { _ ->
-                        val copo = ElEfecto()
-                        aquel.efecto.add(copo)
-                    }
-                }
-                aquel.nevada.addAll(aquel.efecto)
-                aquel.efecto.clear()
-                aquel.nevada.removeIf { a -> !a.estado }
-                aquel.actPrincipal.runOnUiThread() {
-                    aquel.invalidate()
-                }
-                sleep(80)
-                nevadaIntenso = 0f
+                    in 301..500 -> {
+                        aquel.nevada.forEach {
+                            it.LaNevadaEfecto()
+                        }
+                        if (true) {
+                            (1..105).forEach { _ ->
+                                val copo = ElEfecto()
+                                aquel.efecto.add(copo)
+                            }
+                        }
+                        aquel.nevada.addAll(aquel.efecto)
+                        aquel.efecto.clear()
+                        aquel.nevada.removeIf { a -> !a.estado }
+                        aquel.actPrincipal.runOnUiThread() {
+                            aquel.invalidate()
+                        }
+                        sleep(80)
+                        nevadaIntenso = 0f
+                    } // fin del segundo caso
+
+                    else -> {
+                        aquel.nevada.forEach {
+                            it.LaNevadaEfecto()
+                        }
+                        if (true) {
+                            (1..280).forEach { _ ->
+                                val copo = ElEfecto()
+                                aquel.efecto.add(copo)
+                            }
+                        }
+                        aquel.nevada.addAll(aquel.efecto)
+                        aquel.efecto.clear()
+                        aquel.nevada.removeIf { a -> !a.estado }
+                        aquel.actPrincipal.runOnUiThread() {
+                            aquel.invalidate()
+                        }
+                        sleep(80)
+                        nevadaIntenso = 0f
+
+                    }// fin de ultimo caso
+                }// fin del when}
+
             }
-        }
+        } // fin del while para la ejecucion
+        fun estaPausado(): Boolean {return pausado}
+        fun enEjecucion(): Boolean {return ejecutar}
+        fun pausar(){pausado = !pausado}
+        fun terminar(){ejecutar= false}
     } // fin de la clase del hilo para manejar
 }// fin de la clase del hilo
