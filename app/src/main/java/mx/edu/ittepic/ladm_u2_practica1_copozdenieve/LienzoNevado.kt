@@ -1,13 +1,26 @@
 package mx.edu.ittepic.ladm_u2_practica1_copozdenieve
 
 import android.graphics.*
+import android.view.MotionEvent
 import android.view.View
+import kotlinx.coroutines.*
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.random.Random
 
 class LienzoNevado(ActMain: MainActivity) : View(ActMain) {
 
     // declaracion de variables
     val actPrincipal = ActMain
     val fondoApp = BitmapFactory.decodeResource(actPrincipal.resources, R.drawable.fondoapp)
+    var efecto = ArrayList<ElEfecto>()
+    var nevada = ArrayList<ElEfecto>()
+    val laNevada = NevadaEfecto(this)
+    val scope = CoroutineScope(Job() + Dispatchers.Main)
+    val objNevada = scope.launch(
+        EmptyCoroutineContext,
+        CoroutineStart.LAZY
+    ) { actPrincipal.runOnUiThread { laNevada.start() } }
 
     //inicio del metodo onDraw
     override fun onDraw(c: Canvas) {
@@ -20,7 +33,7 @@ class LienzoNevado(ActMain: MainActivity) : View(ActMain) {
 
 
         //-------------------------------------------------- bloque para los ovalos del piso --------------------------------------------------
-        val ovaloPiso = Paint(); ovaloPiso.isAntiAlias=true
+        val ovaloPiso = Paint(); ovaloPiso.isAntiAlias = true
         val colorPiso = Color.rgb(169, 141, 141)
         ovaloPiso.setColor(colorPiso)
         c.drawOval(-140f, 300 + ajusteAlto, 600f, 600 + ajusteAlto, ovaloPiso)
@@ -29,8 +42,8 @@ class LienzoNevado(ActMain: MainActivity) : View(ActMain) {
 
         // -------------------------------------------------- bloque de los arboles --------------------------------------------------
         // ------------------------------- primer arbol a la derecha ----------------------------
-        val arbolTronco = Paint(); arbolTronco.isAntiAlias=true
-        val arbolHojas = Paint(); arbolHojas.isAntiAlias=true
+        val arbolTronco = Paint(); arbolTronco.isAntiAlias = true
+        val arbolHojas = Paint(); arbolHojas.isAntiAlias = true
 
         // ----------------- Tronco del arbol 1 -------------------------
         arbolTronco.setColor(Color.rgb(77, 60, 60))
@@ -66,8 +79,12 @@ class LienzoNevado(ActMain: MainActivity) : View(ActMain) {
 
         // -------------------------------------------------- bloque de la casa --------------------------------------------------
 
-        val pared = Paint();val chimenea = Paint();val ventana = Paint()
-        val puerta = Paint();val techo = Paint();val humo = Paint()
+        val pared = Paint()
+        val chimenea = Paint()
+        val ventana = Paint()
+        val puerta = Paint()
+        val techo = Paint()
+        val humo = Paint()
 
         pared.isAntiAlias = true;puerta.isAntiAlias = true;chimenea.isAntiAlias = true
         ventana.isAntiAlias = true;techo.isAntiAlias = true;humo.isAntiAlias = true
@@ -83,30 +100,96 @@ class LienzoNevado(ActMain: MainActivity) : View(ActMain) {
         //Ventana
         c.drawRect(791f, 505 - ajusteAlto, 989f, 540 - ajusteAlto, ventana)
         //Dibujo ed la chimenea
-        c.drawRect(672f,325-ajusteAlto,715f,390-ajusteAlto,chimenea)
+        c.drawRect(672f, 325 - ajusteAlto, 715f, 390 - ajusteAlto, chimenea)
         //Dibujo del techo
-        c.drawRect(625f,377-ajusteAlto,1060f,461-ajusteAlto,techo)
-        drawTriangle(c,techo,625f,420-ajusteAlto,80)
-        drawTriangle(c,techo,1060f,420-ajusteAlto,80)
+        c.drawRect(625f, 377 - ajusteAlto, 1060f, 461 - ajusteAlto, techo)
+        drawTriangle(c, techo, 625f, 420 - ajusteAlto, 80)
+        drawTriangle(c, techo, 1060f, 420 - ajusteAlto, 80)
 
         //dibujo del humo
-        c.drawOval(685f,288-ajusteAlto,721f,314-ajusteAlto,humo)
-        c.drawOval(712f,251-ajusteAlto,755f,285-ajusteAlto,humo)
-        c.drawOval(740f,209-ajusteAlto,817f,251-ajusteAlto,humo)
+        c.drawOval(685f, 288 - ajusteAlto, 721f, 314 - ajusteAlto, humo)
+        c.drawOval(712f, 251 - ajusteAlto, 755f, 285 - ajusteAlto, humo)
+        c.drawOval(740f, 209 - ajusteAlto, 817f, 251 - ajusteAlto, humo)
 
-    }
+        //  ----------------------------------------------- Sección de la nevada --------------------------------------------
+
+        val nieve = Paint()
+        nieve.setColor(Color.WHITE)
+        nevada.forEach {
+            c.drawCircle(it.posX, it.posY, it.tamaño, nieve)
+        }
+        objNevada.start()
+    }// final del onDraw
+
+/*    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        if (event != null) {
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {objNevada.start()} // fin del Action event
+            }// fin del when
+        }
+        return true
+    } // fin del on touch event*/
 
     public fun drawTriangle(c: Canvas, p: Paint, x: Float, y: Float, ancho: Int) {
-        val halfWidth = ancho/2
-        val trapecio = Path()
+        val halfWidth = ancho / 2
+        val triangulo = Path()
 
-        trapecio.moveTo(x, y - halfWidth)
-        trapecio.lineTo(x-halfWidth,y + halfWidth)
-        trapecio.lineTo(x+halfWidth,y + halfWidth)
-        trapecio.moveTo(x, y - halfWidth)
-        trapecio.close()
+        triangulo.moveTo(x, y - halfWidth)
+        triangulo.lineTo(x - halfWidth, y + halfWidth)
+        triangulo.lineTo(x + halfWidth, y + halfWidth)
+        triangulo.moveTo(x, y - halfWidth)
+        triangulo.close()
 
-        c.drawPath(trapecio,p)
+        c.drawPath(triangulo, p)
     }
 
-}
+} // fin de la clase Lienzo
+
+class NevadaEfecto(este: LienzoNevado) : Thread() {
+    private val aquel = este
+    private var nevadaIntenso = 0f
+    override fun run() {
+        super.run()
+        while (true) {
+            nevadaIntenso = Random.nextFloat()
+            if (nevadaIntenso<= 300) {
+                aquel.nevada.forEach {
+                    it.LaNevadaEfecto()
+                }
+                if (true) {
+                    (1..20).forEach { _ ->
+                        val copo = ElEfecto()
+                        aquel.efecto.add(copo)
+                    }
+                }
+                aquel.nevada.addAll(aquel.efecto)
+                aquel.efecto.clear()
+                aquel.nevada.removeIf { a -> !a.estado }
+                aquel.actPrincipal.runOnUiThread() {
+                    aquel.invalidate()
+                }
+                sleep(80)
+                nevadaIntenso = 0f
+
+            } else if (nevadaIntenso >300){
+                aquel.nevada.forEach {
+                    it.LaNevadaEfecto()
+                }
+                if (true) {
+                    (1..180).forEach { _ ->
+                        val copo = ElEfecto()
+                        aquel.efecto.add(copo)
+                    }
+                }
+                aquel.nevada.addAll(aquel.efecto)
+                aquel.efecto.clear()
+                aquel.nevada.removeIf { a -> !a.estado }
+                aquel.actPrincipal.runOnUiThread() {
+                    aquel.invalidate()
+                }
+                sleep(80)
+                nevadaIntenso = 0f
+            }
+        }
+    } // fin de la clase del hilo para manejar
+}// fin de la clase del hilo
