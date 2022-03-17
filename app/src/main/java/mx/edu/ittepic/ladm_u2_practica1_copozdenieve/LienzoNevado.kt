@@ -1,29 +1,29 @@
 package mx.edu.ittepic.ladm_u2_practica1_copozdenieve
 
 import android.graphics.*
-import android.provider.Settings
-import android.view.MotionEvent
 import android.view.View
-import kotlinx.coroutines.*
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 class LienzoNevado(ActMain: MainActivity) : View(ActMain) {
 
     // declaracion de variables
-    val actPrincipal = ActMain
-    val fondoApp = BitmapFactory.decodeResource(actPrincipal.resources, R.drawable.fondoapp)
-    var contador = 0f
-    var efecto = ArrayList<ElEfecto>()
-    var nevada = ArrayList<ElEfecto>()
-
-    val scope = CoroutineScope(Job() + Dispatchers.Main)
-    val objNevada = scope.launch(
-        EmptyCoroutineContext,
-        CoroutineStart.LAZY
-    ) { actPrincipal.runOnUiThread { laNevada.start() } }
-
+    private val actPrincipal = ActMain
+    private val fondoApp = BitmapFactory.decodeResource(actPrincipal.resources, R.drawable.fondoapp)
+    private var ventisca = false;
+    private var counterVentisca = Random.nextInt(200); var tiempo =0
+    lateinit var copos:Array<Copo>
+    private val controlNevada = GlobalScope.launch {
+        while (true) {
+            actPrincipal.runOnUiThread {
+                invalidate()
+            }
+            delay(300)
+        }
+    }// fin del global scope
+    var hiloEjecucion = false
 
     //inicio del metodo onDraw
     override fun onDraw(c: Canvas) {
@@ -102,7 +102,7 @@ class LienzoNevado(ActMain: MainActivity) : View(ActMain) {
         c.drawRect(673f, 505 - ajusteAlto, 733f, 607 - ajusteAlto, puerta)
         //Ventana
         c.drawRect(791f, 505 - ajusteAlto, 989f, 540 - ajusteAlto, ventana)
-        //Dibujo ed la chimenea
+        //Dibujo de la chimenea
         c.drawRect(672f, 325 - ajusteAlto, 715f, 390 - ajusteAlto, chimenea)
         //Dibujo del techo
         c.drawRect(625f, 377 - ajusteAlto, 1060f, 461 - ajusteAlto, techo)
@@ -117,125 +117,65 @@ class LienzoNevado(ActMain: MainActivity) : View(ActMain) {
         //  ----------------------------------------------- Sección de la nevada --------------------------------------------
 
         val nieve = Paint()
-        nieve.setColor(Color.WHITE)
-        nevada.forEach {
-            c.drawCircle(it.posX, it.posY, it.tamaño, nieve)
-        }
-        objNevada.start()
-    }// final del onDraw
+        nieve.color = Color.WHITE
 
-/*    override fun onTouchEvent(event: MotionEvent?): Boolean {
-        if (event != null) {
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {objNevada.start()} // fin del Action event
-            }// fin del when
+        if(!hiloEjecucion) {
+            controlNevada.start()
+            hiloEjecucion = false
         }
-        return true
-    } // fin del on touch event*/
+            copos = Array<Copo>(randomIn(5, 90)) { Copo(actPrincipal.lienzo) }
+
+            for (cop in copos) {
+                cop.nevando()
+                cop.pintarseLaCara(c)
+                if (cop.dentroCanvas) {
+                    copos.dropWhile { punto -> !punto.dentroCanvas }
+                }
+            }
+            when (tiempo) {
+                counterVentisca -> {
+                    ventisca = true
+                }
+                else -> {
+                    tiempo += 1
+                }
+            }// fin del when
+            if (!ventisca) {
+                copos = Array<Copo>(randomIn(140, 360)) { Copo(actPrincipal.lienzo) }
+                for (cop in copos) {
+                    cop.nevando()
+                    cop.pintarseLaCara(c)
+                    if (cop.dentroCanvas) {
+                        copos.dropWhile { punto -> !punto.dentroCanvas }
+                    }
+
+                }
+                when (tiempo) {
+                    counterVentisca -> {
+                        ventisca = false
+                    }
+                    else -> {
+                        tiempo -= 1
+                    }
+                }
+            }
+
+
+    }// final del onDraw
 
     public fun drawTriangle(c: Canvas, p: Paint, x: Float, y: Float, ancho: Int) {
         val halfWidth = ancho / 2
         val triangulo = Path()
-
         triangulo.moveTo(x, y - halfWidth)
         triangulo.lineTo(x - halfWidth, y + halfWidth)
         triangulo.lineTo(x + halfWidth, y + halfWidth)
         triangulo.moveTo(x, y - halfWidth)
         triangulo.close()
-
         c.drawPath(triangulo, p)
     }
 
-    // seccion de metodos fuera de la clase
-    fun contadorTiempoNevada() = GlobalScope.launch {
-        var thisContador = 0f
-        while (laNevada.isAlive) {
-            thisContador++
-        }
-        delay((Math.random() * 550).toLong())
-        contador = thisContador
+    fun randomIn(min: Int, max: Int): Int {
+        return Random.nextInt((max - min + 1) + min)
     }
 
-    val laNevada = NevadaEfecto(this, contador)
 } // fin de la clase Lienzo
-
-class NevadaEfecto(este: LienzoNevado, banderaNevado: Float) : Thread() {
-    private val aquel = este
-    private var nevadaIntenso = banderaNevado
-    var ejecutar = true
-    var pausado = false
-    override fun run() {
-        super.run()
-        while (ejecutar) {
-            if (!pausado) {
-                when (nevadaIntenso.toInt()) {
-                    in 1..300 -> {
-                        aquel.nevada.forEach {
-                            it.LaNevadaEfecto()
-                        }
-                        if (true) {
-                            (1..20).forEach { _ ->
-                                val copo = ElEfecto()
-                                aquel.efecto.add(copo)
-                            }
-                        }
-                        aquel.nevada.addAll(aquel.efecto)
-                        aquel.efecto.clear()
-                        aquel.nevada.removeIf { a -> !a.estado }
-                        aquel.actPrincipal.runOnUiThread() {
-                            aquel.invalidate()
-                        }
-                        sleep(80)
-                        nevadaIntenso = 0f
-                    } // fin del primer caso
-
-                    in 301..500 -> {
-                        aquel.nevada.forEach {
-                            it.LaNevadaEfecto()
-                        }
-                        if (true) {
-                            (1..105).forEach { _ ->
-                                val copo = ElEfecto()
-                                aquel.efecto.add(copo)
-                            }
-                        }
-                        aquel.nevada.addAll(aquel.efecto)
-                        aquel.efecto.clear()
-                        aquel.nevada.removeIf { a -> !a.estado }
-                        aquel.actPrincipal.runOnUiThread() {
-                            aquel.invalidate()
-                        }
-                        sleep(80)
-                        nevadaIntenso = 0f
-                    } // fin del segundo caso
-
-                    else -> {
-                        aquel.nevada.forEach {
-                            it.LaNevadaEfecto()
-                        }
-                        if (true) {
-                            (1..280).forEach { _ ->
-                                val copo = ElEfecto()
-                                aquel.efecto.add(copo)
-                            }
-                        }
-                        aquel.nevada.addAll(aquel.efecto)
-                        aquel.efecto.clear()
-                        aquel.nevada.removeIf { a -> !a.estado }
-                        aquel.actPrincipal.runOnUiThread() {
-                            aquel.invalidate()
-                        }
-                        sleep(80)
-                        nevadaIntenso = 0f
-
-                    }// fin de ultimo caso
-                }// fin del when}
-
-            }
-        } // fin del while para la ejecucion
-        fun estaPausado(): Boolean {return pausado}
-        fun enEjecucion(): Boolean {return ejecutar}
-        fun pausar(){pausado = !pausado}
-        fun terminar(){ejecutar= false}
-    } // fin de la clase del hilo para manejar
-}// fin de la clase del hilo
