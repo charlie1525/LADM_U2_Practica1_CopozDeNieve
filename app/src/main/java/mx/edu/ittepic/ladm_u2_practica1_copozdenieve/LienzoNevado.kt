@@ -11,28 +11,28 @@ class LienzoNevado(ActMain: MainActivity) : View(ActMain) {
 
     // declaracion de variables
     private val actPrincipal = ActMain
-    private val fondoApp = BitmapFactory.decodeResource(actPrincipal.resources, R.drawable.fondoapp)
     private var ventisca = false;
     private var counterVentisca = Random.nextInt(200); var tiempo =0
+    private var controlVentisca = 0
     lateinit var copos:Array<Copo>
-    private val controlNevada = GlobalScope.launch {
+    private var controlNevada = GlobalScope.launch {
         while (true) {
-            actPrincipal.runOnUiThread {
+            ActMain.runOnUiThread {
                 invalidate()
             }
-            delay(300)
+            delay(109)
         }
     }// fin del global scope
-    var hiloEjecucion = false
+
+    var coEjecucion = false
 
     //inicio del metodo onDraw
     override fun onDraw(c: Canvas) {
         super.onDraw(c)
-        val general = Paint()
+
         val ajusteAlto = 140f
-        actPrincipal.setTitle("Ancho: ${width}, Alto: ${height}")
+        //actPrincipal.setTitle("Ancho: ${width}, Alto: ${height}")
         c.drawColor(Color.BLACK)
-        c.drawBitmap(fondoApp, 0f, 0f, general)
 
 
         //-------------------------------------------------- bloque para los ovalos del piso --------------------------------------------------
@@ -118,18 +118,17 @@ class LienzoNevado(ActMain: MainActivity) : View(ActMain) {
 
         val nieve = Paint()
         nieve.color = Color.WHITE
-
-        if(!hiloEjecucion) {
+        if (!coEjecucion) {
             controlNevada.start()
-            hiloEjecucion = false
+            coEjecucion = false
         }
-            copos = Array<Copo>(randomIn(5, 90)) { Copo(actPrincipal.lienzo) }
+        copos = Array<Copo>(randomIn(5, 30),{ Copo(actPrincipal.lienzo) })
 
             for (cop in copos) {
                 cop.nevando()
                 cop.pintarseLaCara(c)
                 if (cop.dentroCanvas) {
-                    copos.dropWhile { punto -> !punto.dentroCanvas }
+                    copos.dropWhile { copito -> !copito.dentroCanvas }
                 }
             }
             when (tiempo) {
@@ -138,32 +137,34 @@ class LienzoNevado(ActMain: MainActivity) : View(ActMain) {
                 }
                 else -> {
                     tiempo += 1
+                    controlVentisca+=1
                 }
             }// fin del when
-            if (!ventisca) {
+            if (!ventisca && controlVentisca>30) {
                 copos = Array<Copo>(randomIn(140, 360)) { Copo(actPrincipal.lienzo) }
                 for (cop in copos) {
                     cop.nevando()
+                    cop.acelerar()
                     cop.pintarseLaCara(c)
                     if (cop.dentroCanvas) {
-                        copos.dropWhile { punto -> !punto.dentroCanvas }
+                        copos.dropWhile { copito -> !copito.dentroCanvas }
                     }
 
                 }
                 when (tiempo) {
                     counterVentisca -> {
                         ventisca = false
+                        controlVentisca =6
+                        tiempo =0
                     }
-                    else -> {
-                        tiempo -= 1
-                    }
+                    else -> {}
                 }
             }
 
 
     }// final del onDraw
 
-    public fun drawTriangle(c: Canvas, p: Paint, x: Float, y: Float, ancho: Int) {
+    private fun drawTriangle(c: Canvas, p: Paint, x: Float, y: Float, ancho: Int) {
         val halfWidth = ancho / 2
         val triangulo = Path()
         triangulo.moveTo(x, y - halfWidth)
