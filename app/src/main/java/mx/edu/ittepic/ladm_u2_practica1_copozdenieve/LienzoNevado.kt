@@ -15,9 +15,9 @@ class LienzoNevado(ActMain: MainActivity) : View(ActMain) {
     private var counterVentisca = Random.nextInt(200); var tiempo =0
     private var controlVentisca = 0
     lateinit var copos:Array<Copo>
-    private var controlNevada = GlobalScope.launch {
+    private var controlNevada= GlobalScope.launch {
         while (true) {
-            ActMain.runOnUiThread {
+            actPrincipal.runOnUiThread {
                 invalidate()
             }
             delay(109)
@@ -137,12 +137,13 @@ class LienzoNevado(ActMain: MainActivity) : View(ActMain) {
                 }
                 else -> {
                     tiempo += 1
-                    controlVentisca+=1
+                    controlVentisca+=3
                 }
             }// fin del when
             if (!ventisca && controlVentisca>30) {
                 copos = Array<Copo>(randomIn(140, 360)) { Copo(actPrincipal.lienzo) }
                 for (cop in copos) {
+
                     cop.nevando()
                     cop.acelerar()
                     cop.pintarseLaCara(c)
