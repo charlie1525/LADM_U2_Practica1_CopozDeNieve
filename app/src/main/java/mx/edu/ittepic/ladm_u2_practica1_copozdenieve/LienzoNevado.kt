@@ -14,7 +14,7 @@ class LienzoNevado(ActMain: MainActivity) : View(ActMain) {
     private var ventisca = false;
     private var counterVentisca = Random.nextInt(200); var tiempo =0
     private var controlVentisca = 0
-    lateinit var copos:Array<Copo>
+    var copos = Array<Copo>(randomIn(5, 30)) { Copo(this) }
     private var controlNevada= GlobalScope.launch {
         while (true) {
             actPrincipal.runOnUiThread {
@@ -31,7 +31,7 @@ class LienzoNevado(ActMain: MainActivity) : View(ActMain) {
         super.onDraw(c)
 
         val ajusteAlto = 140f
-        //actPrincipal.setTitle("Ancho: ${width}, Alto: ${height}")
+        actPrincipal.setTitle("Copos de nieve")
         c.drawColor(Color.BLACK)
 
 
@@ -116,15 +116,12 @@ class LienzoNevado(ActMain: MainActivity) : View(ActMain) {
 
         //  ----------------------------------------------- Sección de la nevada --------------------------------------------
 
-        val nieve = Paint()
-        nieve.color = Color.WHITE
         if (!coEjecucion) {
             controlNevada.start()
             coEjecucion = false
         }
-        copos = Array<Copo>(randomIn(5, 30),{ Copo(actPrincipal.lienzo) })
 
-            for (cop in copos) {
+        for (cop in copos) {
                 cop.nevando()
                 cop.pintarseLaCara(c)
                 if (cop.dentroCanvas) {
@@ -140,13 +137,12 @@ class LienzoNevado(ActMain: MainActivity) : View(ActMain) {
                     controlVentisca+=3
                 }
             }// fin del when
-            if (!ventisca && controlVentisca>30) {
-                copos = Array<Copo>(randomIn(140, 360)) { Copo(actPrincipal.lienzo) }
+            if (!ventisca && controlVentisca>randomIn(30,110)) {
+                copos = Array<Copo>(randomIn(140, 360)) { Copo(this) }
                 for (cop in copos) {
-
                     cop.nevando()
-                    cop.acelerar()
                     cop.pintarseLaCara(c)
+                    cop.acelerar()
                     if (cop.dentroCanvas) {
                         copos.dropWhile { copito -> !copito.dentroCanvas }
                     }

@@ -15,26 +15,24 @@ class Copo (lienzo : LienzoNevado){
 
 
     init {
-        posY= randomIn(130,719)
+        posY= randomIn(10,720)
         posX = genRandom(1280)
         tamano = randomIn(3,8)
         dy = genRandom(6)+2
-        dx = genRandom(6)+2
         localColor = Color.WHITE
     }
 
     fun nevando(){
         posY += dy
-        posX += dx
-        if (posY>linLocal.height || posY<0) dentroCanvas = false
-        else if (posX>linLocal.width || posX<0) dentroCanvas = false
+        if (posY>linLocal.height || posY<-50) dentroCanvas = false
 
     }
 
     fun pintarseLaCara(c: Canvas){
-        var pintura = Paint()
+        val pintura = Paint()
         pintura.color = localColor
         c.drawCircle(posX,posY,tamano,pintura)
+        pintura.isAntiAlias = true
     }
 
     private fun genRandom(until: Int):Float{
@@ -46,10 +44,8 @@ class Copo (lienzo : LienzoNevado){
     }
 
     fun acelerar(){
-        dy*=7
-        dx*=7
-        if (posY>linLocal.height || posY<0) dentroCanvas = false
-        else if (posX>linLocal.width || posX<0) dentroCanvas = false
+        dy*=2
+        if (posY>linLocal.height || posY<-50) dentroCanvas = false
     }
 
 }
